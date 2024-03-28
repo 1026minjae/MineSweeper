@@ -5,44 +5,99 @@
 <head>
 <meta charset="utf-8" />
 <title>Minesweeper</title>
+
 <style>
 td {
-    width: 40px;
-    height: 40px;
+    width: 30px;
+    height: 30px;
     margin: 1px 1px 1px 1px;
     padding: 0 0 0 0;
     border: black 1px solid;
+    font-weight: bold;
+    font-size: 16px;
+    text-alignment: center;
+}
+
+td.unchecked {
+    background-color: grey;
+}
+
+td.checked {
     background-color: lightgrey;
 }
+
+td.mine {
+    background-color: red;
+}
 </style>
+
 <script>
+const GAMEBOARDSIZE_MIN = 9;
+const GAMEBOARDSIZE_MAX = 25;
 
-function makeBoard (e) {
-    let boardSize = e.target.value;
+window.onload = () => {
+    gameBoard = new Array(GAMEBOARDSIZE_MAX + 2);
+    for (let i = 0; i < GAMEBOARDSIZE_MAX + 2; ++i) {
+        gameBoard[i] = new Array(GAMEBOARDSIZE_MAX + 2);
+    }
 
-    gameBoard.innerHTML = "";
+    gameBoardWidthSelector = document.querySelector("#gameBoardWidthSelector");
+    gameBoardHeightSelector = document.querySelector("#gameBoardHeightSelector");
+    gameBoardLevelSelector = document.querySelector("#gameBoardLevelSelector");
+    gameBoardWidthSelector.addEventListener("change", newGame);
+    gameBoardHeightSelector.addEventListener("change", newGame);
+    gameBoardLevelSelector.addEventListener("change", newGame);
+};
 
-    for (let i = 0; i < boardSize; ++i) {
+function gameBoardValueChanged (e) {
+    newGame ();
+}
+
+function newGame () {
+    gameBoardWidth = document.querySelector("#gameBoardWidthSelector").value;
+    gameBoardHeight = document.querySelector("#gameBoardHeightSelector").value;
+    gameBoardLevel = document.querySelector("#gameBoardLevelSelector").value;
+
+    initGameBoardUI(gameBoardWidth, gameBoardHeight);
+
+    document.querySelector("#gameBoardWidthDisplay").innerHTML = gameBoardWidth.toString();
+    document.querySelector("#gameBoardHeightDisplay").innerHTML = gameBoardHeight.toString();
+    document.querySelector("#gameBoardLevelDisplay").innerHTML = gameBoardLevel.toString();
+}
+
+function initGameBoardUI (gameBoardWidth, gameBoardHeight) {
+    gameBoardUI = document.querySelector("#gameBoardUI");
+
+    gameBoardUI.innerHTML = "";
+
+    for (let h = 0; h < gameBoardHeight; ++h) {
         newRow = document.createElement("tr");
-        for (let j = 0; j < boardSize; ++j) {
+        for (let w = 0; w < gameBoardWidth; ++w) {
             newCell = document.createElement("td");
+            newCellID = "c" + w.toString() + "_" + h.toString();
+            newCell.setAttribute("id", newCellID);
+            newCell.setAttribute("class", "unchecked");
             newRow.appendChild(newCell);
          }
-        gameBoard.appendChild(newRow);
+        gameBoardUI.appendChild(newRow);
      }
 }
 
-window.onload = () => {
-    gameBoard = document.querySelector("#gameBoard");
-    txtbox = document.querySelector("#boardSize");
-    txtbox.addEventListener("change", makeBoard);
-};
+function gameBoardCellClicked (e) {
+
+}
+
 </script>
 </head>
 
 <body>
-<input id="boardSize" type="range" min="9" max="16" step="1" />
-<table id="gameBoard"></table>
+<font class="menuText">게임보드 가로: <span id="gameBoardWidthDisplay">17</span>칸</font>
+<input id="gameBoardWidthSelector" type="range" min="9" max="25" step="1" />
+<font class="menuText">게임보드 세로: <span id="gameBoardHeightDisplay">17</span>칸</font>
+<input id="gameBoardHeightSelector" type="range" min="9" max="25" step="1" />
+<font class="menuText">레벨: <span id="gameBoardLevelDisplay">6</span></font>
+<input id="gameBoardLevelSelector" type="range" min="1" max="10" step="1" />
+<table id="gameBoardUI"></table>
 </body>
 
 </html>
