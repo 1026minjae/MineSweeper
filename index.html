@@ -34,20 +34,37 @@ td.mine {
 <script>
 const GAMEBOARDSIZE_MIN = 9;
 const GAMEBOARDSIZE_MAX = 25;
+const MARK_WALL = 10;
+const MARK_MINE = 11;
 
 window.onload = () => {
-    gameBoard = new Array(GAMEBOARDSIZE_MAX + 2);
-    for (let i = 0; i < GAMEBOARDSIZE_MAX + 2; ++i) {
-        gameBoard[i] = new Array(GAMEBOARDSIZE_MAX + 2);
+    initGameBoardData ();
+    initGameBoardUI ();
+};
+
+function initGameBoardData () {
+    gameBoardData = new Array(GAMEBOARDSIZE_MAX + 2);
+
+    gameBoardData[0] = Array.from ({length: GAMEBOARDSIZE_MAX + 2}, () => MARK_WALL);
+
+    for (let i = 1; i <= GAMEBOARDSIZE_MAX; ++i) {
+        gameBoardData[i] = Array.from ({length: GAMEBOARDSIZE_MAX + 2}, () => 0);
+        gameBoardData[i][0] = MARK_WALL;
+        gameBoardData[i][GAMEBOARDSIZE_MAX + 1] = MARK_WALL;
     }
 
+    gameBoardData[GAMEBOARDSIZE_MAX + 1] = Array.from ({length: GAMEBOARDSIZE_MAX + 2}, () => MARK_WALL);
+}
+
+function initGameBoardUI () {
+    
     gameBoardWidthSelector = document.querySelector("#gameBoardWidthSelector");
     gameBoardHeightSelector = document.querySelector("#gameBoardHeightSelector");
     gameBoardLevelSelector = document.querySelector("#gameBoardLevelSelector");
     gameBoardWidthSelector.addEventListener("change", newGame);
     gameBoardHeightSelector.addEventListener("change", newGame);
     gameBoardLevelSelector.addEventListener("change", newGame);
-};
+}
 
 function gameBoardValueChanged (e) {
     newGame ();
@@ -58,21 +75,21 @@ function newGame () {
     gameBoardHeight = document.querySelector("#gameBoardHeightSelector").value;
     gameBoardLevel = document.querySelector("#gameBoardLevelSelector").value;
 
-    initGameBoardUI(gameBoardWidth, gameBoardHeight);
+    resetGameBoardUI(gameBoardWidth, gameBoardHeight);
 
     document.querySelector("#gameBoardWidthDisplay").innerHTML = gameBoardWidth.toString();
     document.querySelector("#gameBoardHeightDisplay").innerHTML = gameBoardHeight.toString();
     document.querySelector("#gameBoardLevelDisplay").innerHTML = gameBoardLevel.toString();
 }
 
-function initGameBoardUI (gameBoardWidth, gameBoardHeight) {
+function resetGameBoardUI (gameBoardWidth, gameBoardHeight) {
     gameBoardUI = document.querySelector("#gameBoardUI");
 
     gameBoardUI.innerHTML = "";
 
-    for (let h = 0; h < gameBoardHeight; ++h) {
+    for (let h = 1; h <= gameBoardHeight; ++h) {
         newRow = document.createElement("tr");
-        for (let w = 0; w < gameBoardWidth; ++w) {
+        for (let w = 1; w <= gameBoardWidth; ++w) {
             newCell = document.createElement("td");
             newCellID = "c" + w.toString() + "_" + h.toString();
             newCell.setAttribute("id", newCellID);
