@@ -15,7 +15,7 @@ td {
     border: black 1px solid;
     font-weight: bold;
     font-size: 16px;
-    text-alignment: center;
+    text-align: center;
 }
 
 td.unchecked {
@@ -57,51 +57,119 @@ function initGameBoardData () {
 }
 
 function initGameBoardUI () {
-    
-    gameBoardWidthSelector = document.querySelector("#gameBoardWidthSelector");
-    gameBoardHeightSelector = document.querySelector("#gameBoardHeightSelector");
-    gameBoardLevelSelector = document.querySelector("#gameBoardLevelSelector");
+    let gameBoardWidthSelector = document.querySelector("#gameBoardWidthSelector");
+    let gameBoardHeightSelector = document.querySelector("#gameBoardHeightSelector");
+    let gameBoardLevelSelector = document.querySelector("#gameBoardLevelSelector");
     gameBoardWidthSelector.addEventListener("change", newGame);
     gameBoardHeightSelector.addEventListener("change", newGame);
     gameBoardLevelSelector.addEventListener("change", newGame);
-}
 
-function gameBoardValueChanged (e) {
-    newGame ();
+    window.oncontextmenu = () => {
+        return false;
+    };
 }
 
 function newGame () {
-    gameBoardWidth = document.querySelector("#gameBoardWidthSelector").value;
-    gameBoardHeight = document.querySelector("#gameBoardHeightSelector").value;
-    gameBoardLevel = document.querySelector("#gameBoardLevelSelector").value;
-
-    resetGameBoardUI(gameBoardWidth, gameBoardHeight);
+    let gameBoardWidth = document.querySelector("#gameBoardWidthSelector").value;
+    let gameBoardHeight = document.querySelector("#gameBoardHeightSelector").value;
+    let gameBoardLevel = document.querySelector("#gameBoardLevelSelector").value;
 
     document.querySelector("#gameBoardWidthDisplay").innerHTML = gameBoardWidth.toString();
     document.querySelector("#gameBoardHeightDisplay").innerHTML = gameBoardHeight.toString();
     document.querySelector("#gameBoardLevelDisplay").innerHTML = gameBoardLevel.toString();
+
+    resetGameBoardData(gameBoardWidth, gameBoardHeight);
+    resetGameBoardUI(gameBoardWidth, gameBoardHeight);
+
+    pickMineLocations(gameBoardWidth, gameBoardHeight, gameBoardLevel);
+}
+
+function resetGameBoardData (gameBoardWidth, gameBoardHeight) {
+    gameBoardData[0] = Array.from ({length: GAMEBOARDSIZE_MAX + 2}, () => MARK_WALL);
+
+    for (let i = 1; i <= gameBoardHeight; ++i) {
+        for (let j = 1; j <= gameBoardWidth; ++j) {
+            gameBoardData[i][j] = 0;
+        }
+        gameBoardData[i][gameBoardHeight + 1] = MARK_WALL;
+    }
+
+    for (let j = 0; j <= gameBoardWidth + 1; ++j) {
+        gameBoardData[gameBoardWidth][j] = MARK_WALL;
+    }
 }
 
 function resetGameBoardUI (gameBoardWidth, gameBoardHeight) {
-    gameBoardUI = document.querySelector("#gameBoardUI");
+    let gameBoardUI = document.querySelector("#gameBoardUI");
 
     gameBoardUI.innerHTML = "";
 
     for (let h = 1; h <= gameBoardHeight; ++h) {
         newRow = document.createElement("tr");
+
         for (let w = 1; w <= gameBoardWidth; ++w) {
             newCell = document.createElement("td");
+
             newCellID = "c" + w.toString() + "_" + h.toString();
             newCell.setAttribute("id", newCellID);
             newCell.setAttribute("class", "unchecked");
+            newCell.dataset.rowIndex = w;
+            newCell.dataset.colIndex = h;
+
+            newCell.addEventListener("click", cellLeftClicked);
+            newCell.addEventListener("contextmenu", cellRightClicked);
+
             newRow.appendChild(newCell);
          }
+
         gameBoardUI.appendChild(newRow);
      }
 }
 
-function gameBoardCellClicked (e) {
+function cellLeftClicked (e) {
+    let clickedCell = e.target;
+    let rowIndex = clickedCell.dataset.rowIndex;
+    let colIndex = clickedCell.dataset.colIndex;
 
+    if (clickedCell.className === "unchecked") {
+        clickedCell.removeEventListener("contextmenu", cellRightClicked);
+
+        if (gameBoardData[colIndex][rowIndex] === MARK_MINE) {
+            clickedCell.className = "mine";
+            clickedCell.innerHTML = "◎";
+        }
+        else {
+            clickedCell.className = "checked";
+            clickedCell.innerHTML = gameBoardData[colIndex][rowIndex].toString();
+        }
+    }
+}
+
+function cellRightClicked (e) {
+    if (e.target.innerHTML === "") e.target.innerHTML = "?";
+    else if (e.target.innerHTML === "?") e.target.innerHTML = "";
+}
+
+function pickMineLocations (gameBoardWidth, gameBoardHeight, gameBoardLevel) {
+    gameBoardData[1][1] = MARK_MINE;
+
+    for (let i = 1; i <= gameBoardHeight; ++i) {
+        for (let j = 1; j <= gameBoardWidth; ++j) {
+            if (gameBoardData[i][j] === MARK_MINE) continue;
+
+            let mineCnt = 0;
+            if (gameBoardData[i-1][j-1] === MARK_MINE) ++mineCnt;
+            if (gameBoardData[i-1][j] === MARK_MINE) ++mineCnt;
+            if (gameBoardData[i-1][j+1] === MARK_MINE) ++mineCnt;
+            if (gameBoardData[i][j-1] === MARK_MINE) ++mineCnt;
+            if (gameBoardData[i][j+1] === MARK_MINE) ++mineCnt;
+            if (gameBoardData[i+1][j-1] === MARK_MINE) ++mineCnt;
+            if (gameBoardData[i+1][j] === MARK_MINE) ++mineCnt;
+            if (gameBoardData[i+1][j+1] === MARK_MINE) ++mineCnt;
+
+            gameBoardData[i][j] = mineCnt;
+        }
+    }
 }
 
 </script>
