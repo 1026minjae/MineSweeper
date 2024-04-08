@@ -151,7 +151,17 @@ function cellRightClicked (e) {
 }
 
 function pickMineLocations (gameBoardWidth, gameBoardHeight, gameBoardLevel) {
-    gameBoardData[1][1] = MARK_MINE;
+    let mineToBeMadeCnt = Math.floor(gameBoardWidth * gameBoardHeight * (0.25 + 0.05 * (gameBoardLevel - 1))); 
+    
+    while (mineToBeMadeCnt > 0) {
+        let randomRow = 1 + Math.floor(Math.random() * gameBoardHeight);
+        let randomColumn = 1 + Math.floor(Math.random() * gameBoardWidth); 
+
+        if (gameBoardData[randomRow][randomColumn] !== MARK_MINE) {
+            gameBoardData[randomRow][randomColumn] = MARK_MINE;
+            --mineToBeMadeCnt;
+        }
+    }
 
     for (let i = 1; i <= gameBoardHeight; ++i) {
         for (let j = 1; j <= gameBoardWidth; ++j) {
