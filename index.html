@@ -70,9 +70,9 @@ function initGameBoardUI () {
 }
 
 function newGame () {
-    let gameBoardWidth = document.querySelector("#gameBoardWidthSelector").value;
-    let gameBoardHeight = document.querySelector("#gameBoardHeightSelector").value;
-    let gameBoardLevel = document.querySelector("#gameBoardLevelSelector").value;
+    let gameBoardWidth = parseInt(document.querySelector("#gameBoardWidthSelector").value);
+    let gameBoardHeight = parseInt(document.querySelector("#gameBoardHeightSelector").value);
+    let gameBoardLevel = parseInt(document.querySelector("#gameBoardLevelSelector").value);
 
     document.querySelector("#gameBoardWidthDisplay").innerHTML = gameBoardWidth.toString();
     document.querySelector("#gameBoardHeightDisplay").innerHTML = gameBoardHeight.toString();
@@ -108,7 +108,7 @@ function resetGameBoardUI (gameBoardWidth, gameBoardHeight) {
         for (let w = 1; w <= gameBoardWidth; ++w) {
             newCell = document.createElement("td");
 
-            newCellID = "c" + w.toString() + "_" + h.toString();
+            newCellID = "r" + w.toString() + "c" + h.toString();
             newCell.setAttribute("id", newCellID);
             newCell.setAttribute("class", "unchecked");
             newCell.dataset.rowIndex = w;
@@ -125,12 +125,13 @@ function resetGameBoardUI (gameBoardWidth, gameBoardHeight) {
 }
 
 function cellLeftClicked (e) {
-    let clickedCell = e.target;
-    let rowIndex = clickedCell.dataset.rowIndex;
-    let colIndex = clickedCell.dataset.colIndex;
+    judgeAt(e.target.dataset.rowIndex, e.target.dataset.colIndex);
+}
 
-    if (clickedCell.className === "unchecked") {
-        clickedCell.removeEventListener("contextmenu", cellRightClicked);
+function judgeAt(rowIndex, columnIndex) {
+    let targetCell = document.querySelector("#r" + rowIndex.toString() + "h" + columnIndex.toString());
+    if (targetCell.className === "unchecked") {
+        targetCell.removeEventListener("contextmenu", cellRightClicked);
 
         if (gameBoardData[colIndex][rowIndex] === MARK_MINE) {
             clickedCell.className = "mine";
