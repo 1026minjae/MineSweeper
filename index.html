@@ -85,17 +85,15 @@ function newGame () {
 }
 
 function resetGameBoardData (gameBoardWidth, gameBoardHeight) {
-    gameBoardData[0] = Array.from ({length: GAMEBOARDSIZE_MAX + 2}, () => MARK_WALL);
-
     for (let i = 1; i <= gameBoardHeight; ++i) {
         for (let j = 1; j <= gameBoardWidth; ++j) {
             gameBoardData[i][j] = 0;
         }
-        gameBoardData[i][gameBoardHeight + 1] = MARK_WALL;
+        gameBoardData[i][gameBoardWidth + 1] = MARK_WALL;
     }
 
     for (let j = 0; j <= gameBoardWidth + 1; ++j) {
-        gameBoardData[gameBoardWidth][j] = MARK_WALL;
+        gameBoardData[gameBoardHeight + 1][j] = MARK_WALL;
     }
 }
 
