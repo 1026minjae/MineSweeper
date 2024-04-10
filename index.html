@@ -40,6 +40,7 @@ const MARK_MINE = 11;
 window.onload = () => {
     initGameBoardData ();
     initGameBoardUI ();
+    newGame ();
 };
 
 function initGameBoardData () {
@@ -60,6 +61,9 @@ function initGameBoardUI () {
     let gameBoardWidthSelector = document.querySelector("#gameBoardWidthSelector");
     let gameBoardHeightSelector = document.querySelector("#gameBoardHeightSelector");
     let gameBoardLevelSelector = document.querySelector("#gameBoardLevelSelector");
+    gameBoardWidthSelector.value = "9";
+    gameBoardHeightSelector.value = "9";
+    gameBoardLevelSelector.value = "1";
     gameBoardWidthSelector.addEventListener("change", newGame);
     gameBoardHeightSelector.addEventListener("change", newGame);
     gameBoardLevelSelector.addEventListener("change", newGame);
@@ -125,21 +129,35 @@ function resetGameBoardUI (gameBoardWidth, gameBoardHeight) {
 }
 
 function cellLeftClicked (e) {
-    judgeAt(e.target.dataset.rowIndex, e.target.dataset.colIndex);
+    judgeAt(parseInt(e.target.dataset.rowIndex), parseInt(e.target.dataset.colIndex));
 }
 
-function judgeAt(rowIndex, columnIndex) {
-    let targetCell = document.querySelector("#r" + rowIndex.toString() + "h" + columnIndex.toString());
+function judgeAt(rowIndex, colIndex) {
+    if (gameBoardData[colIndex][rowIndex] === MARK_WALL) return;
+
+    let targetCell = document.querySelector("#r" + rowIndex.toString() + "c" + colIndex.toString());
     if (targetCell.className === "unchecked") {
         targetCell.removeEventListener("contextmenu", cellRightClicked);
 
         if (gameBoardData[colIndex][rowIndex] === MARK_MINE) {
-            clickedCell.className = "mine";
-            clickedCell.innerHTML = "◎";
+            targetCell.className = "mine";
+            targetCell.innerHTML = "◎";
         }
         else {
-            clickedCell.className = "checked";
-            clickedCell.innerHTML = gameBoardData[colIndex][rowIndex].toString();
+            targetCell.className = "checked";
+            if (gameBoardData[colIndex][rowIndex] === 0) {
+                judgeAt(rowIndex - 1, colIndex - 1);
+                judgeAt(rowIndex - 1, colIndex);
+                judgeAt(rowIndex - 1, colIndex + 1);
+                judgeAt(rowIndex, colIndex - 1);
+                judgeAt(rowIndex, colIndex + 1);
+                judgeAt(rowIndex + 1, colIndex - 1);
+                judgeAt(rowIndex + 1, colIndex);
+                judgeAt(rowIndex + 1, colIndex + 1);
+            }
+            else {
+                targetCell.innerHTML = gameBoardData[colIndex][rowIndex].toString();
+            }
         }
     }
 }
@@ -185,11 +203,11 @@ function pickMineLocations (gameBoardWidth, gameBoardHeight, gameBoardLevel) {
 </head>
 
 <body>
-<font class="menuText">게임보드 가로: <span id="gameBoardWidthDisplay">17</span>칸</font>
+<font class="menuText">게임보드 가로: <span id="gameBoardWidthDisplay">9</span>칸</font>
 <input id="gameBoardWidthSelector" type="range" min="9" max="25" step="1" />
-<font class="menuText">게임보드 세로: <span id="gameBoardHeightDisplay">17</span>칸</font>
+<font class="menuText">게임보드 세로: <span id="gameBoardHeightDisplay">9</span>칸</font>
 <input id="gameBoardHeightSelector" type="range" min="9" max="25" step="1" />
-<font class="menuText">레벨: <span id="gameBoardLevelDisplay">6</span></font>
+<font class="menuText">레벨: <span id="gameBoardLevelDisplay">1</span></font>
 <input id="gameBoardLevelSelector" type="range" min="1" max="10" step="1" />
 <table id="gameBoardUI"></table>
 </body>
