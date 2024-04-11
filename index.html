@@ -32,98 +32,162 @@ td.mine {
 </style>
 
 <script>
-const GAMEBOARDSIZE_MIN = 9;
-const GAMEBOARDSIZE_MAX = 25;
+const BOARDSIZE_MIN = 9;
+const BOARDSIZE_MAX = 25;
+const DIFFICULTY_MIN = 1;
+const DIFFICULTY_MAX = 10;
+
 const MARK_WALL = 10;
 const MARK_MINE = 11;
 
-let gameBoardData;
+const WINFLAG_LOSE = 0;
+const WINFLAG_WIN = 1;
+
+let boardData;
 let remainingCellCnt;
+let timer;
 
 window.onload = () => {
-    initGameBoardData ();
-    initGameBoardUI ();
+    initBoardData ();
+    initUI ();
 };
 
-function initGameBoardData () {
-    gameBoardData = new Array(GAMEBOARDSIZE_MAX + 2);
+function initBoardData () {
+    boardData = new Array(BOARDSIZE_MAX + 2);
 
-    gameBoardData[0] = Array.from ({length: GAMEBOARDSIZE_MAX + 2}, () => MARK_WALL);
+    boardData[0] = Array.from ({length: BOARDSIZE_MAX + 2}, () => MARK_WALL);
 
-    for (let i = 1; i <= GAMEBOARDSIZE_MAX; ++i) {
-        gameBoardData[i] = Array.from ({length: GAMEBOARDSIZE_MAX + 2}, () => 0);
-        gameBoardData[i][0] = MARK_WALL;
-        gameBoardData[i][GAMEBOARDSIZE_MAX + 1] = MARK_WALL;
+    for (let rowIdx = 1; rowIdx <= BOARDSIZE_MAX; ++rowIdx) {
+        boardData[rowIdx] = Array.from ({length: BOARDSIZE_MAX + 2}, () => 0);
+        boardData[rowIdx][0] = MARK_WALL;
+        boardData[rowIdx][BOARDSIZE_MAX + 1] = MARK_WALL;
     }
 
-    gameBoardData[GAMEBOARDSIZE_MAX + 1] = Array.from ({length: GAMEBOARDSIZE_MAX + 2}, () => MARK_WALL);
+    boardData[BOARDSIZE_MAX + 1] = Array.from ({length: BOARDSIZE_MAX + 2}, () => MARK_WALL);
 }
 
-function initGameBoardUI () {
-    let gameBoardWidthSelector = document.querySelector("#gameBoardWidthSelector");
-    let gameBoardHeightSelector = document.querySelector("#gameBoardHeightSelector");
-    let gameBoardLevelSelector = document.querySelector("#gameBoardLevelSelector");
-    gameBoardWidthSelector.value = "9";
-    gameBoardHeightSelector.value = "9";
-    gameBoardLevelSelector.value = "1";
-    gameBoardWidthSelector.addEventListener("change", (e) => {
-        document.querySelector("#gameBoardWidthDisplay").innerHTML = e.target.value;
-    });
-    gameBoardHeightSelector.addEventListener("change", (e) => {
-        document.querySelector("#gameBoardHeightDisplay").innerHTML = e.target.value;
-    });
-    gameBoardLevelSelector.addEventListener("change", (e) => {
-        document.querySelector("#gameBoardLevelDisplay").innerHTML = e.target.value;
-    });
-
-    let gameStartButton = document.querySelector("#gameStartButton");
-    gameStartButton.addEventListener("click", startGame);
+function initUI () {
+    initMenuUI();
+    initBoardUI();
 
     window.oncontextmenu = () => {
         return false;
     };
 }
 
+function initMenuUI () {
+    let menuUI = document.createElement("div");
+    menuUI.setAttribute("id", "menuUI");
+
+    let boardWidthDisplay = document.createElement("span");
+    boardWidthDisplay.setAttribute("id", "boardWidthDisplay");
+    boardWidthDisplay.innerHTML = "게임보드 가로: " + BOARDSIZE_MIN + "칸";
+    menuUI.appendChild(boardWidthDisplay);
+
+    let boardWidthSelector = document.createElement("input");
+    boardWidthSelector.setAttribute("id", "boardWidthSelector");
+    boardWidthSelector.setAttribute("type", "range");
+    boardWidthSelector.setAttribute("min", BOARDSIZE_MIN.toString());
+    boardWidthSelector.setAttribute("max", BOARDSIZE_MAX.toString());
+    boardWidthSelector.setAttribute("step", "1");
+    boardWidthSelector.setAttribute("value", BOARDSIZE_MIN.toString());
+    boardWidthSelector.addEventListener("change", (e) => {
+        document.querySelector("#boardWidthDisplay").innerHTML = "게임보드 가로: " + e.target.value + "칸";
+    });
+    menuUI.appendChild(boardWidthSelector);
+
+    let boardHeightDisplay = document.createElement("span");
+    boardHeightDisplay.setAttribute("id", "boardHeightDisplay");
+    boardHeightDisplay.innerHTML = "게임보드 세로: " + BOARDSIZE_MIN + "칸";
+    menuUI.appendChild(boardHeightDisplay);
+
+    let boardHeightSelector = document.createElement("input");
+    boardHeightSelector.setAttribute("id", "boardHeightSelector");
+    boardHeightSelector.setAttribute("type", "range");
+    boardHeightSelector.setAttribute("min", BOARDSIZE_MIN.toString());
+    boardHeightSelector.setAttribute("max", BOARDSIZE_MAX.toString());
+    boardHeightSelector.setAttribute("step", "1");
+    boardHeightSelector.setAttribute("value", BOARDSIZE_MIN.toString());
+    boardHeightSelector.addEventListener("change", (e) => {
+        document.querySelector("#boardHeightDisplay").innerHTML = "게임보드 세로: " + e.target.value + "칸";
+    });
+    menuUI.appendChild(boardHeightSelector);
+
+    let difficultyDisplay = document.createElement("span");
+    difficultyDisplay.setAttribute("id", "difficultyDisplay");
+    difficultyDisplay.innerHTML = "난이도: " + DIFFICULTY_MIN;
+    menuUI.appendChild(difficultyDisplay);
+
+    let difficultySelector = document.createElement("input");
+    difficultySelector.setAttribute("id", "difficultySelector");
+    difficultySelector.setAttribute("type", "range");
+    difficultySelector.setAttribute("min", DIFFICULTY_MIN.toString());
+    difficultySelector.setAttribute("max", DIFFICULTY_MAX.toString());
+    difficultySelector.setAttribute("step", "1");
+    difficultySelector.setAttribute("value", DIFFICULTY_MIN.toString());
+    difficultySelector.addEventListener("change", (e) => {
+        document.querySelector("#difficultyDisplay").innerHTML = "난이도: " + e.target.value;
+    });
+    menuUI.appendChild(difficultySelector);
+
+    let gameStartButton = document.createElement("input");
+    gameStartButton.setAttribute("id",  "gameStartButton");
+    gameStartButton.setAttribute("type", "button");
+    gameStartButton.setAttribute("value", "새 게임");
+    gameStartButton.addEventListener("click", startGame);
+    menuUI.appendChild(gameStartButton);
+
+    document.querySelector("body").appendChild(menuUI);
+}
+
+function initBoardUI () {
+    let boardUI = document.createElement("table");
+    boardUI.setAttribute("id", "boardUI");
+    document.querySelector("body").appendChild(boardUI);
+}
+
 function startGame (e) {
-    let gameBoardWidth = parseInt(document.querySelector("#gameBoardWidthSelector").value);
-    let gameBoardHeight = parseInt(document.querySelector("#gameBoardHeightSelector").value);
-    let gameBoardLevel = parseInt(document.querySelector("#gameBoardLevelSelector").value);
+    let boardWidth = parseInt(document.querySelector("#boardWidthSelector").value);
+    let boardHeight = parseInt(document.querySelector("#boardHeightSelector").value);
+    let difficulty = parseInt(document.querySelector("#difficultySelector").value);
 
-    resetGameBoardData(gameBoardWidth, gameBoardHeight);
-    resetGameBoardUI(gameBoardWidth, gameBoardHeight);
+    resetBoardData(boardWidth, boardHeight);
+    resetBoardUI(boardWidth, boardHeight);
 
-    pickMineLocations(gameBoardWidth, gameBoardHeight, gameBoardLevel);
+    pickMineLocations(boardWidth, boardHeight, difficulty);
+    countAdjacentMineOfEachCell(boardWidth, boardHeight);
+
+    startTimer();
 }
 
-function resetGameBoardData (gameBoardWidth, gameBoardHeight) {
-    for (let i = 1; i <= gameBoardHeight; ++i) {
-        for (let j = 1; j <= gameBoardWidth; ++j) {
-            gameBoardData[i][j] = 0;
+function resetBoardData (boardWidth, boardHeight) {
+    for (let rowIdx = 1; rowIdx <= boardHeight; ++rowIdx) {
+        for (let colIdx = 1; colIdx <= boardWidth; ++colIdx) {
+            boardData[rowIdx][colIdx] = 0;
         }
-        gameBoardData[i][gameBoardWidth + 1] = MARK_WALL;
+        boardData[rowIdx][boardWidth + 1] = MARK_WALL;
     }
 
-    for (let j = 0; j <= gameBoardWidth + 1; ++j) {
-        gameBoardData[gameBoardHeight + 1][j] = MARK_WALL;
+    for (let colIdx = 0; colIdx <= boardWidth + 1; ++colIdx) {
+        boardData[boardHeight + 1][colIdx] = MARK_WALL;
     }
 }
 
-function resetGameBoardUI (gameBoardWidth, gameBoardHeight) {
-    let gameBoardUI = document.querySelector("#gameBoardUI");
+function resetBoardUI (boardWidth, boardHeight) {
+    let boardUI = document.querySelector("#boardUI");
 
-    gameBoardUI.innerHTML = "";
+    boardUI.innerHTML = "";
 
-    for (let h = 1; h <= gameBoardHeight; ++h) {
+    for (let rowIdx = 1; rowIdx <= boardHeight; ++rowIdx) {
         newRow = document.createElement("tr");
 
-        for (let w = 1; w <= gameBoardWidth; ++w) {
+        for (let colIdx = 1; colIdx <= boardWidth; ++colIdx) {
             newCell = document.createElement("td");
 
-            newCellID = "r" + w.toString() + "c" + h.toString();
-            newCell.setAttribute("id", newCellID);
+            newCell.setAttribute("id", "r" + rowIdx.toString() + "c" + colIdx.toString());
             newCell.setAttribute("class", "unchecked");
-            newCell.dataset.rowIndex = w;
-            newCell.dataset.colIndex = h;
+            newCell.dataset.rowIdx = rowIdx;
+            newCell.dataset.colIdx = colIdx;
 
             newCell.addEventListener("click", cellLeftClicked);
             newCell.addEventListener("contextmenu", cellRightClicked);
@@ -131,52 +195,47 @@ function resetGameBoardUI (gameBoardWidth, gameBoardHeight) {
             newRow.appendChild(newCell);
          }
 
-        gameBoardUI.appendChild(newRow);
+        boardUI.appendChild(newRow);
      }
 }
 
-function cellLeftClicked (e) {
-    judgeAt(parseInt(e.target.dataset.rowIndex), parseInt(e.target.dataset.colIndex));
-}
+function pickMineLocations (boardWidth, boardHeight, difficulty) {
+    let mineToBeMadeCnt = Math.floor(boardWidth * boardHeight * (0.2 + 0.05 * difficulty)); 
+    remainingCellCnt = boardWidth * boardHeight - mineToBeMadeCnt;
+    
+    while (mineToBeMadeCnt > 0) {
+        let randomRow = 1 + Math.floor(Math.random() * boardHeight);
+        let randomColumn = 1 + Math.floor(Math.random() * boardWidth); 
 
-function judgeAt(rowIndex, colIndex) {
-    if (gameBoardData[colIndex][rowIndex] === MARK_WALL) return;
-
-    let targetCell = document.querySelector("#r" + rowIndex.toString() + "c" + colIndex.toString());
-    if (targetCell.className === "unchecked") {
-        targetCell.removeEventListener("contextmenu", cellRightClicked);
-
-        if (gameBoardData[colIndex][rowIndex] === MARK_MINE) {
-            targetCell.className = "mine";
-            targetCell.innerHTML = "◎";
-
-            stopGame(FLAG_LOSE);
-        }
-        else {
-            targetCell.className = "checked";
-
-            if (gameBoardData[colIndex][rowIndex] === 0) {
-                judgeAt(rowIndex - 1, colIndex - 1);
-                judgeAt(rowIndex - 1, colIndex);
-                judgeAt(rowIndex - 1, colIndex + 1);
-                judgeAt(rowIndex, colIndex - 1);
-                judgeAt(rowIndex, colIndex + 1);
-                judgeAt(rowIndex + 1, colIndex - 1);
-                judgeAt(rowIndex + 1, colIndex);
-                judgeAt(rowIndex + 1, colIndex + 1);
-            }
-            else {
-                targetCell.innerHTML = gameBoardData[colIndex][rowIndex].toString();
-            }
-
-            --remainingCellCnt;
-            if (remainingCellCnt === 0) stopGame(FLAG_WIN);
+        if (boardData[randomRow][randomColumn] !== MARK_MINE) {
+            boardData[randomRow][randomColumn] = MARK_MINE;
+            --mineToBeMadeCnt;
         }
     }
 }
 
-function stopGame (flag) {
-    // todo
+function countAdjacentMineOfEachCell (boardWidth, boardHeight) {
+    for (let rowIdx = 1; rowIdx <= boardHeight; ++rowIdx) {
+        for (let colIdx = 1; colIdx <= boardWidth; ++colIdx) {
+            if (boardData[rowIdx][colIdx] === MARK_MINE) continue;
+
+            let adjacentMineCnt = 0;
+            if (boardData[rowIdx - 1][colIdx - 1] === MARK_MINE) ++adjacentMineCnt;
+            if (boardData[rowIdx - 1][colIdx] === MARK_MINE) ++adjacentMineCnt;
+            if (boardData[rowIdx - 1][colIdx + 1] === MARK_MINE) ++adjacentMineCnt;
+            if (boardData[rowIdx][colIdx - 1] === MARK_MINE) ++adjacentMineCnt;
+            if (boardData[rowIdx][colIdx + 1] === MARK_MINE) ++adjacentMineCnt;
+            if (boardData[rowIdx + 1][colIdx - 1] === MARK_MINE) ++adjacentMineCnt;
+            if (boardData[rowIdx + 1][colIdx] === MARK_MINE) ++adjacentMineCnt;
+            if (boardData[rowIdx + 1][colIdx + 1] === MARK_MINE) ++adjacentMineCnt;
+
+            boardData[rowIdx][colIdx] = adjacentMineCnt;
+        }
+    }
+}
+
+function cellLeftClicked (e) {
+    judgeAt(parseInt(e.target.dataset.rowIdx), parseInt(e.target.dataset.colIdx));
 }
 
 function cellRightClicked (e) {
@@ -184,51 +243,58 @@ function cellRightClicked (e) {
     else if (e.target.innerHTML === "?") e.target.innerHTML = "";
 }
 
-function pickMineLocations (gameBoardWidth, gameBoardHeight, gameBoardLevel) {
-    let mineToBeMadeCnt = Math.floor(gameBoardWidth * gameBoardHeight * (0.25 + 0.05 * (gameBoardLevel - 1))); 
-    remainingCellCnt = gameBoardWidth * gameBoardHeight - mineToBeMadeCnt;
-    
-    while (mineToBeMadeCnt > 0) {
-        let randomRow = 1 + Math.floor(Math.random() * gameBoardHeight);
-        let randomColumn = 1 + Math.floor(Math.random() * gameBoardWidth); 
+function judgeAt(rowIdx, colIdx) {
+    if (boardData[rowIdx][colIdx] === MARK_WALL) return;
 
-        if (gameBoardData[randomRow][randomColumn] !== MARK_MINE) {
-            gameBoardData[randomRow][randomColumn] = MARK_MINE;
-            --mineToBeMadeCnt;
+    let targetCell = document.querySelector("#r" + rowIdx.toString() + "c" + colIdx.toString());
+    if (targetCell.className === "unchecked") {
+        targetCell.removeEventListener("contextmenu", cellRightClicked);
+
+        if (boardData[rowIdx][colIdx] === MARK_MINE) {
+            targetCell.className = "mine";
+            targetCell.innerHTML = "◎";
+
+            stopGame(WINFLAG_LOSE);
+        }
+        else {
+            targetCell.className = "checked";
+
+            if (boardData[rowIdx][colIdx] === 0) {
+                judgeAt(rowIdx - 1, colIdx - 1);
+                judgeAt(rowIdx - 1, colIdx);
+                judgeAt(rowIdx - 1, colIdx + 1);
+                judgeAt(rowIdx, colIdx - 1);
+                judgeAt(rowIdx, colIdx + 1);
+                judgeAt(rowIdx + 1, colIdx - 1);
+                judgeAt(rowIdx + 1, colIdx);
+                judgeAt(rowIdx + 1, colIdx + 1);
+            }
+            else {
+                targetCell.innerHTML = boardData[rowIdx][colIdx].toString();
+            }
+
+            --remainingCellCnt;
+            if (remainingCellCnt === 0) stopGame(WINFLAG_WIN);
         }
     }
+}
 
-    for (let i = 1; i <= gameBoardHeight; ++i) {
-        for (let j = 1; j <= gameBoardWidth; ++j) {
-            if (gameBoardData[i][j] === MARK_MINE) continue;
+function stopGame (winFlag) {
+    // todo
+}
 
-            let adjacentMineCnt = 0;
-            if (gameBoardData[i-1][j-1] === MARK_MINE) ++adjacentMineCnt;
-            if (gameBoardData[i-1][j] === MARK_MINE) ++adjacentMineCnt;
-            if (gameBoardData[i-1][j+1] === MARK_MINE) ++adjacentMineCnt;
-            if (gameBoardData[i][j-1] === MARK_MINE) ++adjacentMineCnt;
-            if (gameBoardData[i][j+1] === MARK_MINE) ++adjacentMineCnt;
-            if (gameBoardData[i+1][j-1] === MARK_MINE) ++adjacentMineCnt;
-            if (gameBoardData[i+1][j] === MARK_MINE) ++adjacentMineCnt;
-            if (gameBoardData[i+1][j+1] === MARK_MINE) ++adjacentMineCnt;
+function startTimer () {
+    // todo
+}
 
-            gameBoardData[i][j] = adjacentMineCnt;
-        }
-    }
+function stopTimer () {
+    // todo
 }
 
 </script>
 </head>
 
 <body>
-<font class="menuText">게임보드 가로: <span id="gameBoardWidthDisplay">9</span>칸</font>
-<input id="gameBoardWidthSelector" type="range" min="9" max="25" step="1" />
-<font class="menuText">게임보드 세로: <span id="gameBoardHeightDisplay">9</span>칸</font>
-<input id="gameBoardHeightSelector" type="range" min="9" max="25" step="1" />
-<font class="menuText">레벨: <span id="gameBoardLevelDisplay">1</span></font>
-<input id="gameBoardLevelSelector" type="range" min="1" max="10" step="1" />
-<input id="gameStartButton" type="button" value="새로운 게임" />
-<table id="gameBoardUI"></table>
 </body>
 
 </html>
