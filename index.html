@@ -29,10 +29,14 @@ td.checked {
 td.mine {
     background-color: red;
 }
+
+span {
+    margin-right: 10px;
+}
 </style>
 
 <script>
-const BOARDSIZE_MIN = 9;
+const BOARDSIZE_MIN = 5;
 const BOARDSIZE_MAX = 25;
 const DIFFICULTY_MIN = 1;
 const DIFFICULTY_MAX = 10;
@@ -46,6 +50,7 @@ const WINFLAG_WIN = 1;
 let boardData;
 let remainingCellCnt;
 let timer;
+let elapsedTime;
 
 window.onload = () => {
     initBoardData ();
@@ -69,10 +74,8 @@ function initBoardData () {
 function initUI () {
     initMenuUI();
     initBoardUI();
-
-    window.oncontextmenu = () => {
-        return false;
-    };
+    initLastMsg();
+    invalidateDefaultRightClickedEvent();
 }
 
 function initMenuUI () {
@@ -96,6 +99,8 @@ function initMenuUI () {
     });
     menuUI.appendChild(boardWidthSelector);
 
+    menuUI.appendChild(document.createElement("br"));
+
     let boardHeightDisplay = document.createElement("span");
     boardHeightDisplay.setAttribute("id", "boardHeightDisplay");
     boardHeightDisplay.innerHTML = "게임보드 세로: " + BOARDSIZE_MIN + "칸";
@@ -112,6 +117,8 @@ function initMenuUI () {
         document.querySelector("#boardHeightDisplay").innerHTML = "게임보드 세로: " + e.target.value + "칸";
     });
     menuUI.appendChild(boardHeightSelector);
+
+    menuUI.appendChild(document.createElement("br"));
 
     let difficultyDisplay = document.createElement("span");
     difficultyDisplay.setAttribute("id", "difficultyDisplay");
@@ -130,6 +137,13 @@ function initMenuUI () {
     });
     menuUI.appendChild(difficultySelector);
 
+    menuUI.appendChild(document.createElement("br"));
+
+    let timerDisplay = document.createElement("span");
+    timerDisplay.setAttribute("id", "timerDisplay");
+    timerDisplay.innerHTML = "00:00:00";
+    menuUI.appendChild(timerDisplay);
+
     let gameStartButton = document.createElement("input");
     gameStartButton.setAttribute("id",  "gameStartButton");
     gameStartButton.setAttribute("type", "button");
@@ -146,6 +160,18 @@ function initBoardUI () {
     document.querySelector("body").appendChild(boardUI);
 }
 
+function initLastMsg () {
+    let lastMsg = document.createElement("span");
+    lastMsg.setAttribute("id", "lastMsg");
+    document.querySelector("body").appendChild(lastMsg);
+}
+
+function invalidateDefaultRightClickedEvent () {
+    window.oncontextmenu = () => {
+        return false;
+    };
+}
+
 function startGame (e) {
     let boardWidth = parseInt(document.querySelector("#boardWidthSelector").value);
     let boardHeight = parseInt(document.querySelector("#boardHeightSelector").value);
@@ -153,6 +179,7 @@ function startGame (e) {
 
     resetBoardData(boardWidth, boardHeight);
     resetBoardUI(boardWidth, boardHeight);
+    resetLastMsg();
 
     pickMineLocations(boardWidth, boardHeight, difficulty);
     countAdjacentMineOfEachCell(boardWidth, boardHeight);
@@ -199,8 +226,12 @@ function resetBoardUI (boardWidth, boardHeight) {
      }
 }
 
+function resetLastMsg () {
+    document.querySelector("#lastMsg").innerHTML = "";
+}
+
 function pickMineLocations (boardWidth, boardHeight, difficulty) {
-    let mineToBeMadeCnt = Math.floor(boardWidth * boardHeight * (0.2 + 0.05 * difficulty)); 
+    let mineToBeMadeCnt = Math.floor(boardWidth * boardHeight * (0.1 + 0.05 * difficulty)); 
     remainingCellCnt = boardWidth * boardHeight - mineToBeMadeCnt;
     
     while (mineToBeMadeCnt > 0) {
@@ -235,7 +266,7 @@ function countAdjacentMineOfEachCell (boardWidth, boardHeight) {
 }
 
 function cellLeftClicked (e) {
-    judgeAt(parseInt(e.target.dataset.rowIdx), parseInt(e.target.dataset.colIdx));
+    reveal(parseInt(e.target.dataset.rowIdx), parseInt(e.target.dataset.colIdx));
 }
 
 function cellRightClicked (e) {
@@ -243,7 +274,7 @@ function cellRightClicked (e) {
     else if (e.target.innerHTML === "?") e.target.innerHTML = "";
 }
 
-function judgeAt(rowIdx, colIdx) {
+function reveal(rowIdx, colIdx) {
     if (boardData[rowIdx][colIdx] === MARK_WALL) return;
 
     let targetCell = document.querySelector("#r" + rowIdx.toString() + "c" + colIdx.toString());
@@ -260,17 +291,26 @@ function judgeAt(rowIdx, colIdx) {
             targetCell.className = "checked";
 
             if (boardData[rowIdx][colIdx] === 0) {
-                judgeAt(rowIdx - 1, colIdx - 1);
-                judgeAt(rowIdx - 1, colIdx);
-                judgeAt(rowIdx - 1, colIdx + 1);
-                judgeAt(rowIdx, colIdx - 1);
-                judgeAt(rowIdx, colIdx + 1);
-                judgeAt(rowIdx + 1, colIdx - 1);
-                judgeAt(rowIdx + 1, colIdx);
-                judgeAt(rowIdx + 1, colIdx + 1);
+                reveal(rowIdx - 1, colIdx - 1);
+                reveal(rowIdx - 1, colIdx);
+                reveal(rowIdx - 1, colIdx + 1);
+                reveal(rowIdx, colIdx - 1);
+                reveal(rowIdx, colIdx + 1);
+                reveal(rowIdx + 1, colIdx - 1);
+                reveal(rowIdx + 1, colIdx);
+                reveal(rowIdx + 1, colIdx + 1);
             }
             else {
                 targetCell.innerHTML = boardData[rowIdx][colIdx].toString();
+
+                if (boardData[rowIdx - 1][colIdx - 1] === 0) reveal(rowIdx - 1, colIdx - 1);
+                if (boardData[rowIdx - 1][colIdx] === 0) reveal(rowIdx - 1, colIdx);
+                if (boardData[rowIdx - 1][colIdx + 1] === 0) reveal(rowIdx - 1, colIdx + 1);
+                if (boardData[rowIdx][colIdx - 1] === 0) reveal(rowIdx, colIdx - 1);
+                if (boardData[rowIdx][colIdx + 1] === 0) reveal(rowIdx, colIdx + 1);
+                if (boardData[rowIdx + 1][colIdx - 1] === 0) reveal(rowIdx + 1, colIdx - 1);
+                if (boardData[rowIdx + 1][colIdx] === 0) reveal(rowIdx + 1, colIdx);
+                if (boardData[rowIdx + 1][colIdx + 1] === 0) reveal(rowIdx + 1, colIdx + 1);
             }
 
             --remainingCellCnt;
@@ -280,15 +320,52 @@ function judgeAt(rowIdx, colIdx) {
 }
 
 function stopGame (winFlag) {
-    // todo
+    stopTimer();
+
+    let lastMsg = document.querySelector("#lastMsg");
+    if (winFlag === WINFLAG_LOSE) {
+        lastMsg.innerHTML = "게임 오버";
+    }
+    else {
+        lastMsg.innerHTML = "클리어!";
+    }
+
+    for (let rowIdx = 1; boardData[rowIdx][1] !== MARK_WALL; ++rowIdx) {
+        for (let colIdx = 1; boardData[1][colIdx] !== MARK_WALL; ++colIdx) {
+            let targetCell = document.querySelector("#r" + rowIdx.toString() + "c" + colIdx.toString());
+
+            targetCell.removeEventListener("contextmenu", cellRightClicked);
+
+            if (boardData[rowIdx][colIdx] === MARK_MINE) {
+                targetCell.className = "mine";
+                targetCell.innerHTML = "◎";
+            }
+            else {
+                targetCell.className = "checked";
+
+                if (boardData[rowIdx][colIdx] !== 0) {
+                    targetCell.innerHTML = boardData[rowIdx][colIdx].toString();
+                }
+            }
+        }
+    }
 }
 
 function startTimer () {
-    // todo
+    elapsedTime = 0;
+    if (timer !== undefined) clearInterval(timer);
+    timer = setInterval(() => {
+        ++elapsedTime;
+        let timerDisplay = document.querySelector("#timerDisplay");
+        let hours = parseInt(elapsedTime / 3600);
+        let minutes = parseInt((elapsedTime % 3600) / 60);
+        let seconds = elapsedTime % 60;
+        timerDisplay.innerHTML = hours.toString() + ":" + minutes.toString() + ":" + seconds.toString();
+    }, 1000);
 }
 
 function stopTimer () {
-    // todo
+    clearInterval(timer);
 }
 
 </script>
