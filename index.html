@@ -231,7 +231,7 @@ function resetLastMsg () {
 }
 
 function pickMineLocations (boardWidth, boardHeight, difficulty) {
-    let mineToBeMadeCnt = Math.floor(boardWidth * boardHeight * (0.1 + 0.05 * difficulty)); 
+    let mineToBeMadeCnt = Math.floor(boardWidth * boardHeight * (0.1 + 0.03 * difficulty)); 
     remainingCellCnt = boardWidth * boardHeight - mineToBeMadeCnt;
     
     while (mineToBeMadeCnt > 0) {
@@ -354,6 +354,7 @@ function stopGame (winFlag) {
 function startTimer () {
     elapsedTime = 0;
     if (timer !== undefined) clearInterval(timer);
+    document.querySelector("#timerDisplay").innerHTML = "00:00:00";
     timer = setInterval(() => {
         ++elapsedTime;
         let timerDisplay = document.querySelector("#timerDisplay");
